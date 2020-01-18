@@ -37,6 +37,37 @@ export function generateWallet(){
 
 }
 
+export async function sendTx(sender, recipent, amount, pvt_key){
+  //getting the nonce value for the txn, include the pending parameter for duplicate errors
+  //var getNonce = await web3.eth.getTransactionCount(sender, 'pending');
+
+  let gasPriceInWei = web3.utils.toWei("5", 'Gwei');
+  console.log({ gasPriceInWei });
+  
+  var rawTx = {
+    gasPrice: web3.utils.toHex(gasPriceInWei),
+    gasLimit: web3.utils.toHex(3000000),
+    to: recipent,
+    value: web3.utils.toHex(web3.utils.toWei(amount, 'ether'))
+  };
+  console.log(rawTx);
+  var tx = new Tx(rawTx);
+  var privKey = Buffer.from(pvt_key, 'hex');
+  tx.sign(privKey);
+
+  var serializedTx = tx.serialize();
+
+  return new Promise((resolve, reject) =>
+    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), function(err, hash) {
+      if (!err) {
+        //console.log(hash);
+        resolve(hash);
+      } else {
+        reject(err);
+      }
+    }));
+
+}
 
 
 // /**

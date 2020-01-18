@@ -25,7 +25,7 @@ class Wallet extends Component {
             {this.state && this.state.showWalletTab && (<p>
                 Private Key : {this.state.walletDetails.private_key}
                 <br />
-                Public Key : {this.state.walletDetails.public_key}
+                Address : {this.state.walletDetails.public_key}
             </p>)}
 
         </React.Fragment>
