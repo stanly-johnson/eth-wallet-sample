@@ -69,23 +69,166 @@ export async function sendTx(sender, recipent, amount, pvt_key){
 
 }
 
+var human_standard_token_abi = [
+  {
+    constant: !0,
+    inputs: [],
+    name: 'name',
+    outputs: [{ name: '', type: 'string' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !0,
+    inputs: [],
+    name: 'symbol',
+    outputs: [{ name: '', type: 'string' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !0,
+    inputs: [],
+    name: 'decimals',
+    outputs: [{ name: '', type: 'uint8' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !0,
+    inputs: [],
+    name: 'totalSupply',
+    outputs: [{ name: '', type: 'uint256' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !0,
+    inputs: [{ name: '_owner', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: 'balance', type: 'uint256' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !1,
+    inputs: [{ name: '_to', type: 'address' }, { name: '_value', type: 'uint256' }],
+    name: 'transfer',
+    outputs: [{ name: 'success', type: 'bool' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !1,
+    inputs: [{ name: '_from', type: 'address' }, { name: '_to', type: 'address' }, { name: '_value', type: 'uint256' }],
+    name: 'transferFrom',
+    outputs: [{ name: 'success', type: 'bool' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !1,
+    inputs: [{ name: '_spender', type: 'address' }, { name: '_value', type: 'uint256' }],
+    name: 'approve',
+    outputs: [{ name: 'success', type: 'bool' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !0,
+    inputs: [{ name: '_owner', type: 'address' }, { name: '_spender', type: 'address' }],
+    name: 'allowance',
+    outputs: [{ name: 'remaining', type: 'uint256' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    anonymous: !1,
+    inputs: [
+      { indexed: !0, name: '_from', type: 'address' },
+      { indexed: !0, name: '_to', type: 'address' },
+      { indexed: !1, name: '_value', type: 'uint256' }
+    ],
+    name: 'Transfer',
+    type: 'event'
+  },
+  {
+    anonymous: !1,
+    inputs: [
+      { indexed: !0, name: '_owner', type: 'address' },
+      { indexed: !0, name: '_spender', type: 'address' },
+      { indexed: !1, name: '_value', type: 'uint256' }
+    ],
+    name: 'Approval',
+    type: 'event'
+  },
+  {
+    inputs: [
+      { name: '_initialAmount', type: 'uint256' },
+      { name: '_tokenName', type: 'string' },
+      { name: '_decimalUnits', type: 'uint8' },
+      { name: '_tokenSymbol', type: 'string' }
+    ],
+    payable: !1,
+    type: 'constructor'
+  },
+  {
+    constant: !1,
+    inputs: [{ name: '_spender', type: 'address' }, { name: '_value', type: 'uint256' }, { name: '_extraData', type: 'bytes' }],
+    name: 'approveAndCall',
+    outputs: [{ name: 'success', type: 'bool' }],
+    payable: !1,
+    type: 'function'
+  },
+  {
+    constant: !0,
+    inputs: [],
+    name: 'version',
+    outputs: [{ name: '', type: 'string' }],
+    payable: !1,
+    type: 'function'
+  }
+];
 
-// /**
-//  * Function to fetch the ETH balance of an account
-//  * @param {String} account_address 
-//  * 
-//  * @returns 
-//  *  final balance in ETH
-//  */
-// export async function getEthBalance(account_address){
-//     //Fetch the ETH balance of the address
-//     account_address = web3.utils.toHex(account_address);
-//     try {
-//       const wei_balance = await web3.eth.getBalance(account_address);
-//       const final_balance = web3.utils.fromWei(wei_balance, 'ether');
-//       return `${final_balance}`;
-//     } catch (error) {
-//       console.log(error);
-//       return 'cannot compute';
-//     }
-// }
+
+export async function sendTokenTx(sender, token_contract_addr, recipent, amount, pvt_key){
+  //getting the nonce value for the txn, include the pending parameter for duplicate errors
+  //var getNonce = await web3.eth.getTransactionCount(sender, 'pending');
+
+  let gasPriceInWei = web3.utils.toWei("5", 'Gwei');
+  console.log({ gasPriceInWei });
+
+  let value = parseInt(amount, 10);
+  value = value * 1000000
+  console.log(value);
+  var contract = new web3.eth.Contract(human_standard_token_abi, token_contract_addr, {
+      from: sender
+    });
+  const payload = contract.methods.transfer(recipent, value).encodeABI();
+  const recipentAddress = token_contract_addr;
+  
+  var rawTx = {
+    gasPrice: web3.utils.toHex(gasPriceInWei),
+    gasLimit: web3.utils.toHex(3000000),
+    to: recipentAddress,
+    value: '0x0',
+    data: payload
+  };
+  console.log(rawTx);
+  var tx = new Tx(rawTx);
+  var privKey = Buffer.from(pvt_key, 'hex');
+  tx.sign(privKey);
+
+  var serializedTx = tx.serialize();
+
+  return new Promise((resolve, reject) =>
+    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), function(err, hash) {
+      if (!err) {
+        //console.log(hash);
+        resolve(hash);
+      } else {
+        reject(err);
+      }
+    }));
+
+}
