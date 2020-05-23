@@ -39,14 +39,15 @@ export function generateWallet(){
 
 export async function sendTx(sender, recipent, amount, pvt_key){
   //getting the nonce value for the txn, include the pending parameter for duplicate errors
-  //var getNonce = await web3.eth.getTransactionCount(sender, 'pending');
-
-  let gasPriceInWei = web3.utils.toWei("5", 'Gwei');
+  var getNonce = await web3.eth.getTransactionCount(sender, 'pending');
+  // set the gas price for the transaction
+  let gasPriceInWei = web3.utils.toWei("20", 'Gwei');
   console.log({ gasPriceInWei });
   
   var rawTx = {
+    nonce: getNonce,
     gasPrice: web3.utils.toHex(gasPriceInWei),
-    gasLimit: web3.utils.toHex(3000000),
+    gasLimit: web3.utils.toHex(21000),
     to: recipent,
     value: web3.utils.toHex(web3.utils.toWei(amount, 'ether'))
   };
