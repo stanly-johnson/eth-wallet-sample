@@ -3,7 +3,11 @@ var Wallet = require('ethereumjs-wallet');
 var Web3 = require('web3');
 var Tx = require('ethereumjs-tx');
 
-var web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/v3/fe850a1d3b5f4d4e9f9df5f6760e691d'));
+// connect to infura - test network
+//var web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/v3/fe850a1d3b5f4d4e9f9df5f6760e691d'));
+
+// connect to local ganache network
+var web3 = new Web3("http://127.0.0.1:7545");
 
 //-->Use the below code to set Metamask as the web3 provider if needed for testing
 // window.addEventListener('load', function () {
@@ -194,21 +198,20 @@ var human_standard_token_abi = [
 
 export async function sendTokenTx(sender, token_contract_addr, recipent, amount, pvt_key){
   //getting the nonce value for the txn, include the pending parameter for duplicate errors
-  //var getNonce = await web3.eth.getTransactionCount(sender, 'pending');
+  var getNonce = await web3.eth.getTransactionCount(sender, 'pending');
 
   let gasPriceInWei = web3.utils.toWei("5", 'Gwei');
   console.log({ gasPriceInWei });
 
-  let value = parseInt(amount, 10);
-  value = value * 1000000
-  console.log(value);
   var contract = new web3.eth.Contract(human_standard_token_abi, token_contract_addr, {
       from: sender
     });
-  const payload = contract.methods.transfer(recipent, value).encodeABI();
+  
+  const payload = contract.methods.transfer(recipent, amount).encodeABI();
   const recipentAddress = token_contract_addr;
   
   var rawTx = {
+    nonce: getNonce,
     gasPrice: web3.utils.toHex(gasPriceInWei),
     gasLimit: web3.utils.toHex(3000000),
     to: recipentAddress,
